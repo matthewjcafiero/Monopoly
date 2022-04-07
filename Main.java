@@ -1,4 +1,4 @@
-//TODO: clear terminal line?, chance cards, community chest cards, jail stuff, create characters, more than 2 players, timers for read out, auctioning, morgating, ability to check what you own, build houses (building shortages), doubles get extra rolls and if 3 doubles jail boi, trading
+//TODO: double rent thing for unowned, clear terminal line?, chance cards, community chest cards, jail stuff, create characters, more than 2 players, timers for read out, auctioning, morgating, ability to check what you own, build houses (building shortages), doubles get extra rolls and if 3 doubles jail boi, trading
 
 import java.io.*;
 import java.util.LinkedList;
@@ -248,18 +248,17 @@ public class Main {
       if (propTracker != 0) {
         System.out.println("Properties:");
         for (Property tile : properties) {
-          System.out.print(" - " + tile.name + " - \n\t - Rents: ");
+          System.out.print(" - " + tile.name + " - Contains: " +
+              houseStringHelper(tile.houseLevel) + " - " + mortgagedStringHelper(tile.mortgaged) + " -\n\t - Rents: ");
           for (int i = 0; i < 6; i++) {
             System.out.print("$" + tile.rent[i]);
             if (i != 5) {
               System.out.print(",");
             }
           }
-          System.out
-              .print("\n\t - " + "House Cost: $" + tile.houseCost + ", Constructed: "
-                  + houseStringHelper(tile.houseLevel));
+          System.out.print("\n\t - " + "House Cost: $" + tile.houseCost);
           System.out.print("\n\t - ");
-          System.out.println("Mortgage Value: $" + tile.cost / 2 + ", Unmortgaged");
+          System.out.println("Mortgage Value: $" + tile.cost / 2);
         }
       }
       if (railTracker != 0) {
@@ -285,6 +284,14 @@ public class Main {
       return (numHouse + " houses");
     } else {
       return "Hotel";
+    }
+  }
+
+  public static String mortgagedStringHelper(boolean mortgaged) {
+    if (mortgaged) {
+      return "Mortgaged";
+    } else {
+      return "Unmortgaged";
     }
   }
 
