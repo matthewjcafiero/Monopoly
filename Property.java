@@ -23,7 +23,19 @@ public class Property extends Purchasable {
   // (0...6)
   @Override
   public int getRent() {
+    if (houseLevel == 0 && checkSetOwnership()) {
+      return rent[0] * 2;
+    }
     return rent[houseLevel];
   }
 
+  public boolean checkSetOwnership() {
+    Player temp = set.owners[0];
+    for (int i = 0; i < set.owners.length; i++) {
+      if (!temp.equals(set.owners[i])) {
+        return false;
+      }
+    }
+    return true;
+  }
 }

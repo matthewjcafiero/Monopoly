@@ -6,6 +6,27 @@ import java.util.Random;
 
 public class Main {
 
+  public static Game GameTest() {
+    Game g = new Game();
+    Player player = g.currentPlayer;
+    Purchasable p1 = (Purchasable) g.tileSet[6];
+    player.ownedTiles.add(p1);
+    p1.owner = player;
+    int i = p1.set.getIndex(p1);
+    p1.set.owners[i] = player;
+    p1 = (Purchasable) g.tileSet[8];
+    player.ownedTiles.add(p1);
+    p1.owner = player;
+    i = p1.set.getIndex(p1);
+    p1.set.owners[i] = player;
+    p1 = (Purchasable) g.tileSet[9];
+    player.ownedTiles.add(p1);
+    p1.owner = player;
+    i = p1.set.getIndex(p1);
+    p1.set.owners[i] = player;
+    return g;
+  }
+
   public static void main(String[] args) throws Exception {
     startRepl();
   }
@@ -22,6 +43,11 @@ public class Main {
       } else if (command.equals("start")) {
         Game game = new Game();
         System.out.println("New game created");
+        gameREPL(game);
+        end = true;
+      } else if (command.equals("test")) {
+        Game game = GameTest();
+        System.out.println("New test game created");
         gameREPL(game);
         end = true;
       } else {
@@ -118,9 +144,17 @@ public class Main {
           // If yes, we subtract the cost from current player's money, add the Purchasable
           // tile to current players owned tiles, and sets the purchaseables owner to the
           // current player.
+          // TODO: would a change owner helper be helpful?
           currentPlayer.money -= purchasable.cost;
           currentPlayer.ownedTiles.add(purchasable);
           purchasable.owner = currentPlayer;
+
+          // We also need to change the set ownership for this set in the correct index of
+          // the owners array only if it is a property
+          if (purchasable.getClass() == Property.class) {
+            int i = purchasable.set.getIndex(purchasable);
+            purchasable.set.owners[i] = currentPlayer;
+          }
 
           // This is a set of checks for Railroads and Utilities to iterate the
           // tracker values for the currentPlayer, which is important to calculating the
@@ -180,12 +214,26 @@ public class Main {
       // out a confirmation statement with extra info
       Class purchasableClass = purchasable.getClass();
       if (purchasableClass == Property.class) {
-        int rent = ((Property) purchasable).getRent();
+        Property property = (Property) purchasable;
+        int rent = property.getRent();
         currentPlayer.money -= rent;
         tileOwner.money += rent;
 
+        Set set = purchasable.set;
+        String modify = "";
+        if (property.checkSetOwnership()) {
+          modify = ", as the " + set.name + " set is completely owned by " + set.getOwner().name;
+        }
+        if (property.houseLevel == 1) {
+          modify += " and contains 1 house";
+        } else if (property.houseLevel > 1 && property.houseLevel != 5) {
+          modify += " and contains " + property.houseLevel + " houses";
+        } else if (property.houseLevel == 5) {
+          modify += " an contains a hotel";
+        }
+
         System.out.println(purchasable.name + " is owned by " + tileOwner.name + ".  Therefore, you own them $"
-            + rent + " in rent.  \n$" + rent + " was taken from your savings.");
+            + rent + " in rent" + modify + ".  \n$" + rent + " was taken from your savings.");
 
       } else if (purchasableClass == Railroad.class) {
         int rent = ((Railroad) purchasable).getRent();
