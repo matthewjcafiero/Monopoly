@@ -38,4 +38,13 @@ public class Property extends Purchasable {
     }
     return true;
   }
+
+  public void buildHouse(int num) {
+    int temp = houseLevel + num;
+    if (temp > 5) {
+      houseLevel = 5;
+    } else {
+      houseLevel = temp;
+    }
+  }
 }

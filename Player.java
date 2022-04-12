@@ -26,6 +26,9 @@ public class Player {
 
   // should i make unique player ids?
   public boolean equals(Player other) {
-    return name == other.name;
+    if (other != null) {
+      return name == other.name;
+    }
+    return false;
   }
 }

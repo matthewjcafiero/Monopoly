@@ -12,7 +12,8 @@ public class Set {
   public Player getOwner() {
     Player temp = owners[0];
     for (int i = 0; i < owners.length; i++) {
-      if (!temp.equals(owners[i])) {
+      Player t = owners[i];
+      if (temp == null || !temp.equals(owners[i])) {
         return null;
       }
     }

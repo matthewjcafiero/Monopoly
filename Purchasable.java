@@ -7,5 +7,4 @@ abstract class Purchasable extends Tile {
   abstract int getRent();
 
   Set set;
-
 }

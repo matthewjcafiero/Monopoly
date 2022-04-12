@@ -58,34 +58,35 @@ public class Main {
 
   public static void gameREPL(Game game) throws Exception {
     BufferedReader input = new BufferedReader(new InputStreamReader(System.in));
-    Boolean end = false;
+    End end = new End(false);
     boolean newPlayerTurn = true;
 
-    while (!end) {
+    while (!end.value) {
       Player currentPlayer = game.currentPlayer;
       if (newPlayerTurn) {
         System.out.println("******************************************************************************");
         System.out.println("*** " + currentPlayer.name + ", it is your turn.  Press [any key] to continue.");
         System.out.print(" > ");
         if (input.readLine().equals("quit")) {
-          end = true;
+          end.value = true;
           break;
         }
         System.out.println("You have $" + currentPlayer.money + " in savings currently.  You own "
             + currentPlayer.ownedTiles.size() + " properties.");
-        System.out.println("Enter [roll] to roll for movement, [list props] to list owned properties.");
       }
       newPlayerTurn = false;
-
+      returnMainMenuPrint();
       System.out.print(" > ");
       String command = input.readLine();
       if (command.equals("quit")) {
-        end = true;
+        end.value = true;
       } else if (command.equals("roll")) {
         rollCommand(game, input, end);
         newPlayerTurn = true;
       } else if (command.equals("list props")) {
         listPropCommand(game);
+      } else if (command.equals("construct")) {
+        constructCommand(game, end);
       } else {
         System.out.println("Invalid command");
       }
@@ -97,7 +98,7 @@ public class Main {
     return 2 + numGen.nextInt(6) + numGen.nextInt(6);
   }
 
-  public static void rollCommand(Game game, BufferedReader input, Boolean end) throws Exception {
+  public static void rollCommand(Game game, BufferedReader input, End end) throws Exception {
     Player currentPlayer = game.currentPlayer;
     int rollValue = rollDice();
     System.out.println("You rolled a " + rollValue + ".");
@@ -121,7 +122,7 @@ public class Main {
   // to purchase an unowned Purchasable tile, and runs the associated text and
   // commands through the REPL
   public static void purchasableProcedure(Player currentPlayer, Purchasable purchasable, BufferedReader input,
-      Boolean end) throws Exception {
+      End end) throws Exception {
     // This if statement differentiates what happens based on if the current player
     // can afford to purchase the given purchasable tile or not
     if (currentPlayer.money >= purchasable.cost) {
@@ -182,7 +183,7 @@ public class Main {
         } else if (response.equals("quit")) {
           // Sets Boolean end to true in order to true in order to end the larger REPL in
           // the future, and then sets validResponse to true to end the sub-REPL
-          end = true;
+          end.value = true;
           validResponse = true;
         } else {
           // In the event of any other command being entered, print out this statement
@@ -323,13 +324,12 @@ public class Main {
       }
 
     }
-    System.out.println("***********\nEnter [roll] to roll for movement, [list props] to list owned properties.");
-
+    returnMainMenuPrint();
   }
 
   public static String houseStringHelper(int numHouse) {
     if (numHouse < 5) {
-      return (numHouse + " houses");
+      return (numHouse + " Houses");
     } else {
       return "Hotel";
     }
@@ -343,4 +343,114 @@ public class Main {
     }
   }
 
+  public static void constructCommand(Game game, End end) throws Exception {
+    BufferedReader input = new BufferedReader(new InputStreamReader(System.in));
+    Player currentPlayer = game.currentPlayer;
+
+    // Creating and printing the sets and their properties
+    LinkedList<Set> buildSet = game.getBuildSet();
+    // printBuildSet(buildSet);
+
+    // First, check the command contains build or contains destroy
+    End validResponse = new End(false);
+    while (!validResponse.value) {
+      printBuildSet(buildSet);
+      System.out.println(
+          "To construct a building on a given property, enter [build] [property name] [house level].  Enter [back] to return to menu.");
+      System.out.print(" > ");
+      String command = input.readLine();
+      if (command.equals("quit")) {
+        end.value = true;
+        break;
+      } else if (command.equals("back")) {
+        validResponse.value = true;
+        break;
+      }
+      String[] splitCommand = command.split(" ");
+      // TODO: right now this requires that all property names are 2 words to work,
+      // change that
+      if (splitCommand.length == 4) {
+        if (splitCommand[0].equals("build")) {
+          buildProcedure(game, splitCommand[1] + " " + splitCommand[2], splitCommand[3]);
+        } else if (splitCommand[0].equals("destroy")) {
+          // TODO: create destroyProcedure and run it here (must have validResponse as an
+          // arg)
+        } else {
+          System.out.println("Invalid command");
+        }
+      } else {
+        System.out.println("Invalid command");
+      }
+    }
+  }
+
+  public static void buildProcedure(Game game, String strProperty, String strHouseLevel) {
+    Player currentPlayer = game.currentPlayer;
+    Property property = getPropertyByName(game, strProperty);
+
+    if (property == null || !property.owner.equals(currentPlayer) && !validHouseLevelCheck(strHouseLevel)) {
+      System.out.println("Invalid command");
+      return;
+    } else {
+      int num = Integer.parseInt(strHouseLevel);
+      if (property.houseLevel == 5) {
+        System.out.println(property.name + " already contains a hotel, nothing more can be built.");
+      } else if (property.houseLevel + num > 5) {
+        property.buildHouse(num);
+        currentPlayer.money -= property.houseCost * (5 - property.houseLevel);
+        System.out.println("Cannot construct " + num + "houses as 5 is the limit. " + property.name
+            + " now contains a hotel. You were charged for " + (5 - property.houseLevel) + " houses.");
+      } else {
+        property.buildHouse(num);
+        currentPlayer.money -= property.houseCost * num;
+        if (property.houseLevel == 5) {
+          System.out.println(property.name + " now contains a hotel.");
+        } else if (property.houseLevel == 1) {
+          System.out.println(property.name + " now contains 1 house.");
+        } else {
+          System.out.println(property.name + " now contains " + property.houseLevel +
+              " houses");
+        }
+      }
+      System.out.println("***********\nYou have $" + currentPlayer.money + " in savings currently.");
+
+    }
+  }
+
+  public static void printBuildSet(LinkedList<Set> buildSet) {
+    for (Set set : buildSet) {
+      System.out.println(set.name + " Set:");
+      for (Purchasable purchasable : set.members) {
+        Property property = (Property) purchasable;
+        System.out.println("\t - " + property.name + " - " + houseStringHelper(property.houseLevel) + ", House Cost: $"
+            + property.houseCost);
+      }
+    }
+  }
+
+  public static boolean validHouseLevelCheck(String strHouseLevel) {
+    try {
+      int num = Integer.parseInt(strHouseLevel);
+      if (num > 5 && num < 0) {
+        return false;
+      }
+      return true;
+    } catch (Exception e) {
+      return false;
+    }
+  }
+
+  public static Property getPropertyByName(Game game, String strProperty) {
+    for (Tile tile : game.tileSet) {
+      if (tile.name.equals(strProperty) && tile.getClass() == Property.class) {
+        return (Property) tile;
+      }
+    }
+    return null;
+  }
+
+  public static void returnMainMenuPrint() {
+    System.out.println(
+        "***********\nEnter [roll] to roll for movement, [list props] to list owned properties, [construct] to build or deconstruct buildings.");
+  }
 }

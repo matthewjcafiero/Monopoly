@@ -1,3 +1,5 @@
+import java.util.LinkedList;
+
 public class Game {
   int players;
   Tile[] tileSet;
@@ -179,5 +181,15 @@ public class Game {
       tile.owner = currentPlayer;
       return true;
     }
+  }
+
+  public LinkedList<Set> getBuildSet() {
+    LinkedList<Set> buildSet = new LinkedList<>();
+    for (Set propertySet : setSet) {
+      if (currentPlayer.equals(propertySet.getOwner())) {
+        buildSet.add(propertySet);
+      }
+    }
+    return buildSet;
   }
 }
